@@ -9,7 +9,10 @@
 <ion-content padding>
   <h1>Audio Recording Test</h1>
   <p>Talk for 3 seconds, then you will hear your recording played back</p>
-  <div><audio #audio controls autoplay></audio></div>
-  <ion-button [disabled]="!isDisabled" (click)="onRecordingStart()">Start recording...</ion-button>
-  <ion-button [disabled]="isDisabled" (click)="stopRecording()">Stop recording...</ion-button>
+  <div><audio #audio id="audio" controls autoplay></audio></div>
+  <ion-button [disabled]="isDisabled" (click)="recordAudio()">Start recording...</ion-button>
+  <ion-button [disabled]="isDisabled" (click)="stopRecordAudio()">Stop recording...</ion-button>
+  <ion-button (click)="download()">Save...</ion-button>
+  {{recordRTC | json}}
+
 </ion-content>

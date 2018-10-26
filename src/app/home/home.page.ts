@@ -8,88 +8,48 @@ const RecordRTC = require('recordrtc/RecordRTC.min');
 })
 export class HomePage implements AfterViewInit {
   isDisabled;
-  @ViewChild('audioOption') audioPlayerRef;
+  @ViewChild('audio') audioPlayerRef;
 
-  stream;
+  public streamSource: any;
+  public recordRTC: any;
   video;
-  recordRTC;
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
     // set the initial state of the video
-    const video: HTMLVideoElement = this.audioPlayerRef.nativeElement;
+    const video: HTMLAudioElement = this.audioPlayerRef.nativeElement;
     video.muted = false;
     video.controls = true;
     video.autoplay = false;
+
+    this.streamSource = await navigator.mediaDevices.getUserMedia({ audio: true });
+    this.recordRTC = RecordRTC(this.streamSource, {
+      bitsPerSecond: 128000,
+      bufferSize: 256,
+      numberOfAudioChannels: 1,
+      recorderType: RecordRTC.StereoAudioRecorder,
+      mimeType: 'audio/mp3'
+    });
   }
 
 
   recordAudio(): Promise<any> {
-    return new Promise(async resolve => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recordRTC = RecordRTC(stream, {
-        recorderType: RecordRTC.StereoAudioRecorder,
-        mimeType: 'audio/wav'
-      });
-
-      recordRTC.startRecording();
-      recordRTC.stopRecording(function (audioURL) {
-        this.audioRecorded = audioURL;
-
-        const recordedBlob = recordRTC.getBlob();
-        recordRTC.getDataURL(function (dataURL) { });
-      });
-
+    return new Promise(resolve => {
+      this.recordRTC.startRecording();
     });
   }
 
-  onRecordingStart() {
-    const mediaConstraints = {
-      recorderType: RecordRTC.StereoAudioRecorder,
-      mimeType: 'audio/wav'
-    };
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then(this.successCallback.bind(this), error => console.log(error));
-
-  }
-  stopRecording() {
-    const recordRTC = this.recordRTC;
-    recordRTC.stopRecording(this.processVideo.bind(this));
-    const stream = this.stream;
-    stream.getAudioTracks().forEach(track => track.stop());
-    stream.getVideoTracks().forEach(track => track.stop());
-  }
-  successCallback(stream: MediaStream) {
-    const options = {
-      recorderType: RecordRTC.StereoAudioRecorder,
-      mimeType: 'audio/wav'
-    };
-
-    this.stream = stream;
-    this.recordRTC = RecordRTC(stream, options);
-    this.recordRTC.startRecording();
-    const video: HTMLVideoElement = this.video.nativeElement;
-    video.src = window.URL.createObjectURL(stream);
-    this.toggleControls();
+  stopRecordAudio(): Promise<any> {
+    return new Promise(resolve => {
+      this.recordRTC.stopRecording(audioURL => {
+        const recordedBlob = this.recordRTC.getBlob();
+      });
+    });
+    console.log(this.recordRTC);
   }
 
-  toggleControls() {
-    const video: HTMLVideoElement = this.video.nativeElement;
-    video.muted = !video.muted;
-    video.controls = !video.controls;
-    video.autoplay = !video.autoplay;
-  }
-
-  processVideo(audioVideoWebMURL) {
-    const video: HTMLVideoElement = this.video.nativeElement;
-    const recordRTC = this.recordRTC;
-    video.src = audioVideoWebMURL;
-    this.toggleControls();
-    const recordedBlob = recordRTC.getBlob();
-    recordRTC.getDataURL(function (dataURL) { });
-  }
   download() {
     this.recordRTC.save('video.wav');
+    console.log(this.recordRTC);
   }
 
 }
